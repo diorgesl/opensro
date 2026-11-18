@@ -1,0 +1,83 @@
+<!doctype html>
+<!--
+page.html - the portal's one page: status, play button, sign-up and the
+top players. Rendered by portal.go (pageData).
+-->
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Silkroad Online</title>
+<style>
+	:root { --bg: #101820; --card: #17222c; --text: #d7e8ed; --muted: #8aa1ab; --line: #263540; --accent: #d9a441; --ok: #6cc28f; --bad: #f08a80; }
+	* { box-sizing: border-box; }
+	body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+	main { max-width: 960px; margin: 0 auto; padding: 32px 16px 60px; }
+	h1 { margin: 0 0 4px; font-size: 32px; }
+	h2 { margin: 0 0 12px; font-size: 18px; }
+	.muted { color: var(--muted); }
+	.hero { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+	.play { display: inline-block; padding: 12px 28px; border-radius: 6px; background: var(--accent); color: #1a1205; font-weight: 700; font-size: 18px; text-decoration: none; }
+	.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; align-items: start; }
+	.card { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px; }
+	.flash { padding: 10px 14px; border-radius: 6px; margin-bottom: 16px; border: 1px solid; }
+	.flash.ok { color: var(--ok); border-color: var(--ok); }
+	.flash.bad { color: var(--bad); border-color: var(--bad); }
+	form { display: flex; flex-direction: column; gap: 10px; }
+	label { display: flex; flex-direction: column; gap: 2px; font-size: 13px; color: var(--muted); }
+	input, button { font: inherit; padding: 8px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--bg); color: var(--text); }
+	button { background: var(--accent); border-color: var(--accent); color: #1a1205; font-weight: 600; cursor: pointer; }
+	table { width: 100%; border-collapse: collapse; font-size: 14px; }
+	th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+	th { color: var(--muted); font-weight: 500; }
+	td.n { text-align: right; font-variant-numeric: tabular-nums; }
+	.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; background: var(--bad); }
+	.dot.up { background: var(--ok); }
+	.table-wrap { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+	<div class="hero">
+		<div>
+			<h1>Silkroad Online</h1>
+			<div class="muted">
+				{{with .Status}}<span class="dot{{if .Up}} up{{end}}"></span>{{if .Up}}Online, {{.Online}} jogando agora{{else}}Servidor fora do ar{{end}}
+				{{else}}Status indisponível{{end}}
+			</div>
+		</div>
+		<a class="play" href="/play">Jogar</a>
+	</div>
+
+	{{if .Flash}}<div class="flash {{if .FlashOK}}ok{{else}}bad{{end}}" role="status">{{.Flash}}</div>{{end}}
+
+	<div class="grid">
+		<section class="card">
+			<h2>Criar conta</h2>
+			<form method="post" action="/portal/signup">
+				<label>ID <input name="id" value="{{.ID}}" required minlength="3" maxlength="16" pattern="[A-Za-z0-9_]+" autocomplete="username"></label>
+				<label>Senha <input name="password" type="password" required minlength="8" maxlength="72" autocomplete="new-password"></label>
+				<label>Confirmar senha <input name="confirm" type="password" required minlength="8" maxlength="72" autocomplete="new-password"></label>
+				<button type="submit">Criar conta</button>
+				<span class="muted">ID: 3 a 16 letras, números ou _. Senha: 8 a 72 caracteres.</span>
+			</form>
+		</section>
+
+		<section class="card">
+			<h2>Ranking</h2>
+			{{if .Rows}}
+			<div class="table-wrap">
+			<table>
+				<thead><tr><th>#</th><th>Personagem</th><th>Raça</th><th>Guild</th><th class="n">Nível</th><th class="n">Uniques</th></tr></thead>
+				<tbody>
+				{{range .Rows}}<tr><td>{{.Rank}}</td><td>{{.Name}}</td><td>{{.Race}}</td><td>{{.Guild}}</td><td class="n">{{.Level}}</td><td class="n">{{.Unique}}</td></tr>
+				{{end}}
+				</tbody>
+			</table>
+			</div>
+			{{else}}<p class="muted">Ranking indisponível no momento.</p>{{end}}
+		</section>
+	</div>
+</main>
+</body>
+</html>
