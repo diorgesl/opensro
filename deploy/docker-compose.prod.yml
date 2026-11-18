@@ -290,7 +290,7 @@ services:
       agent:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/play"]
       interval: 10s
       timeout: 5s
       retries: 6
