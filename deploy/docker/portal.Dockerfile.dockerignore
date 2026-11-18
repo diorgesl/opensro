@@ -1,0 +1,4 @@
+# Build-context filter for portal.Dockerfile.
+*
+!deploy/portal
+**/*_test.go

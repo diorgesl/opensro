@@ -22,6 +22,7 @@ que o deploy usa, ele para na sua máquina e não no servidor.
 | `web` | nginx com o cliente: `/api/` vai para o Agent, `/shards/global-official/transport/` vai para o GameWorld. É o único container na rede `traefik`. |
 | `admin` | O painel de administração (`deploy/admin`). Roda na rede do GameWorld e escuta só no loopback do host (`127.0.0.1:9090`). |
 | `admin-relay` | Repassa ao Agent só as rotas de conta que o painel usa. Roda na rede do `identity`. |
+| `portal` | O portal público (`deploy/portal`): status, ranking e cadastro de conta. Roda na rede do GameWorld, sem porta publicada; o nginx do `web` manda `/` e `/portal/` para ele, e o jogo fica em `/play`. |
 
 Jobs de uma vez, que o `rollout.sh` roda: `provision` (cria chaves, tokens, o authority do shard e o token de
 operador que faltarem, sem nunca trocar nada que já existe, e copia os dois tokens do painel para `admin-secrets`), `derive-public` (as chaves públicas de sessão que o GameWorld lê) e
@@ -113,7 +114,8 @@ Rodam na sua máquina, com as imagens locais (`deploy/build-images.sh`):
 |---|---|
 | `cd deploy/identity && go test ./...` | o token passa no verificador real do Agent do upstream |
 | `cd deploy/admin && go test ./...` | o relay só repassa as rotas de conta do painel, o painel recusa Host estranho e POST de outro site, e cada formulário vira a chamada certa |
-| `deploy/test/smoke.sh` | a stack sobe, `/api` e `/shards` respondem, o login funciona, `accounts.sh` e o painel criam conta, o painel alcança a API de operador, `provision` não troca chaves |
+| `cd deploy/portal && go test ./...` | o cadastro valida ID e senha, recusa POST de outro site, limita tentativas por endereço e a home funciona sem a API pública |
+| `deploy/test/smoke.sh` | a stack sobe, `/api` e `/shards` respondem, o login funciona, `accounts.sh`, o painel e o portal criam conta, `/` é o portal, o painel alcança a API de operador, `provision` não troca chaves |
 | `deploy/test/rollout_test.sh` | primeira subida sem conta, rollout, troca de assets, backup só do dono, `--rollback`, release ausente, Agent ou `identity` reiniciados sozinhos, falha no backup com volta automática, rollback recusado depois de upgrade de schema |
 | `deploy/test/publish_test.sh` | tag e recusa sem `IMAGE_REPO` |
 | `deploy/test/deploy_test.sh` | proteção do `DEPLOY_PATH`, release de assets completa, smoke servindo dela |

@@ -164,6 +164,22 @@ if curl -fsS -o /dev/null --max-time 5 -H 'Host: evil.example' "$admin/accounts"
 fi
 echo "ok    foreign Host refused"
 
+echo "==> portal"
+compose up -d --no-deps portal
+for _ in $(seq 1 30); do curl -fsS -o /dev/null --max-time 2 "$base/" && break; sleep 1; done
+case "$(curl -fsS --max-time 10 "$base/")" in
+    *"Criar conta"*) echo "ok    portal home through the edge" ;;
+    *) echo "smoke: / is not the portal" >&2; exit 1 ;;
+esac
+fourth="$(openssl rand -hex 12)"
+code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 10 --data-urlencode id=smoke4 \
+    --data-urlencode "password=$fourth" --data-urlencode "confirm=$fourth" "$base/portal/signup")"
+[ "$code" = 201 ] || { echo "smoke: portal sign-up answered $code" >&2; exit 1; }
+case "$(login "$fourth" smoke4)" in
+    *'"ok":true'*) echo "ok    the portal created a working account" ;;
+    *) echo "smoke: the account the portal created cannot log in" >&2; exit 1 ;;
+esac
+
 echo "==> provision is idempotent"
 before="$(secrets_digest)"
 compose run --rm provision >/dev/null

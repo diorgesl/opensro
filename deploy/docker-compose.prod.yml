@@ -16,6 +16,7 @@ name: silkroad
 x-server-image: &server-image ${IMAGE_REPO:?set IMAGE_REPO}:server-${IMAGE_TAG:?set IMAGE_TAG}
 x-identity-image: &identity-image ${IMAGE_REPO:?set IMAGE_REPO}:identity-${IMAGE_TAG:?set IMAGE_TAG}
 x-admin-image: &admin-image ${IMAGE_REPO:?set IMAGE_REPO}:admin-${IMAGE_TAG:?set IMAGE_TAG}
+x-portal-image: &portal-image ${IMAGE_REPO:?set IMAGE_REPO}:portal-${IMAGE_TAG:?set IMAGE_TAG}
 
 x-catalog: &catalog ./config/shards.prod.json:/app/deploy-config/shards.prod.json:ro
 
@@ -262,6 +263,22 @@ services:
     network_mode: service:identity
     depends_on:
       identity:
+        condition: service_started
+    restart: unless-stopped
+
+  # The public portal (deploy/portal): home page, sign-up and ranking. In the GameWorld's network
+  # namespace, because the public read API listens on its loopback only; accounts go through
+  # admin-relay with the provisioning token. Not published: web's nginx proxies / and /portal/
+  # to gameworld-global-official:8090. rollout.sh recreates it after every GameWorld start.
+  portal:
+    image: *portal-image
+    network_mode: service:gameworld-global-official
+    volumes:
+      - admin-secrets:/admin:ro
+    depends_on:
+      gameworld-global-official:
+        condition: service_healthy
+      admin-relay:
         condition: service_started
     restart: unless-stopped
 
