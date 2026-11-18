@@ -238,9 +238,11 @@ var Registry = []Setting{
 		Unit: "percent",
 		Help: "Extra profit on goods sold between Jangan and Constantinople, both ways, under SRO_TRADE_TIERS."},
 	// The beta's starter silk, read when a wallet is first created. 700 is
-	// the shipped value; 1500 is the beta's bank cap (action betaSilkBankCap),
-	// so a starter can never begin a wallet above the cap.
-	{Key: BetaSilkStarter, Env: "SRO_MALL_STARTER_SILK", Kind: Int, Default: 700, Min: 0, Max: 1500, Step: 50,
+	// the shipped value. Fork: the bound is 10000, past the beta's 1500 bank
+	// cap (action betaSilkBankCap), so a shard can open accounts with more;
+	// such a wallet simply earns no hourly silk until it is spent below the
+	// cap.
+	{Key: BetaSilkStarter, Env: "SRO_MALL_STARTER_SILK", Kind: Int, Default: 700, Min: 0, Max: 10000, Step: 50,
 		Class: Live, Group: "Mall", Label: "Beta starter silk", Unit: "silk",
 		Help: "The Item Mall silk a new account's wallet starts with under SRO_BETA_SILK, granted once, only when the account has no wallet yet; existing wallets are never topped up."},
 	// The job-suit scroll bans: switches, read at each scroll use, so the
