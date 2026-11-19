@@ -91,7 +91,7 @@ if ! err="$(docker network inspect traefik 2>&1 >/dev/null)"; then fail "docker 
 
 if [ "${ROLLOUT_SKIP_PULL:-}" != 1 ]; then
     echo "==> pull $IMAGE_REPO:<role>-$IMAGE_TAG"
-    compose --profile jobs pull provision derive-public agent identity web admin admin-relay portal \
+    compose --profile jobs pull provision derive-public agent identity web admin admin-relay admin-relay-pvp portal \
         || fail "pull failed: is $IMAGE_TAG published, and did $(whoami) run 'docker login ${IMAGE_REPO%%/*}'?"
     # Pulled now, not at the backup: nothing may fetch from the network once the game is down.
     docker pull -q "$BACKUP_IMAGE" >/dev/null || fail "cannot pull $BACKUP_IMAGE for the backup"
@@ -135,7 +135,7 @@ recover() {
             compose up -d identity &&
             compose up -d --wait --force-recreate --no-deps agent &&
             compose up -d --wait gameworld-global-official web &&
-            { compose up -d --force-recreate --no-deps admin-relay admin portal || true; }' "$PROJECT" >&2 \
+            { compose up -d --force-recreate --no-deps admin-relay admin-relay-pvp admin portal || true; }' "$PROJECT" >&2 \
             || echo "rollout: the previous release did not come back; the stack is DOWN" >&2
     else
         echo "rollout: the stack is DOWN (stage: $stage). The backup taken before the upgrade is ${backup:-none}; see README \"Backups\"" >&2
@@ -184,9 +184,9 @@ echo "==> start"
 compose up -d identity
 compose up -d --wait --force-recreate --no-deps agent
 compose up -d --wait gameworld-global-official gameworld-pvp web
-# The panel, its relay and the portal live in the GameWorld's and identity's
+# The panel, its relays and the portal live in the GameWorld's and identity's
 # namespaces: recreated after them, never left in a namespace that is gone.
-compose up -d --force-recreate --no-deps admin-relay admin portal
+compose up -d --force-recreate --no-deps admin-relay admin-relay-pvp admin portal
 compose ps
 stage=up
 
