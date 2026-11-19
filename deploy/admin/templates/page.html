@@ -128,9 +128,9 @@ on the chosen shard, or the account forms. Rendered by panel.go (pageData).
 		</form></div>
 
 		<div class="card"><form method="post" action="/character" class="op">
-			<h3>Resetar status / limpar PK</h3>
+			<h3>Resetar status / limpar PK / premium</h3>
 			<input type="hidden" name="name" value="{{$.Name}}"><input type="hidden" name="shard" value="{{$.Shard}}">
-			<label>Ação <select name="action"><option value="reset-stats">Resetar STR/INT</option><option value="clear-pk">Limpar PK</option></select></label>
+			<label>Ação <select name="action"><option value="reset-stats">Resetar STR/INT</option><option value="clear-pk">Limpar PK</option><option value="clear-premium">Remover premium</option></select></label>
 			<input class="reason" name="reason" placeholder="Motivo" minlength="5" required>
 			<button>Aplicar</button>
 		</form></div>

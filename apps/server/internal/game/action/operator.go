@@ -79,7 +79,8 @@ func (rt *Runtime) OperatorCharacter(division, name string) (map[string]any, err
 		"bodyStatus": c.NativeBodyStatus, "companions": c.Companions(), "inventory": c.MissionInventory,
 		"pk": c.PK, "pvpState": c.PVPState(), "aggressions": c.Aggressions,
 		"strength": domain.CharacterStrength(c), "intellect": domain.CharacterIntellect(c), "statPoints": c.StatPoints,
-		"skillPoints": c.SkillPoints, "experience": c.Experience, "maxLevel": c.MaxLevel}, nil
+		"skillPoints": c.SkillPoints, "experience": c.Experience, "maxLevel": c.MaxLevel,
+		"premiumClock": c.PremiumClock, "paramJobs": c.ParamJobs, "compositeJobs": c.CompositeJobs}, nil
 }
 
 /*
@@ -164,6 +165,53 @@ func (rt *Runtime) OperatorClearPK(division, name string) error {
 	}
 	rt.aggressionActors.Delete(simulation.WorldKey(division, c.Name))
 	rt.notePKRecord(division, c)
+	return nil
+}
+
+/*
+================
+OperatorClearPremium
+
+Port-only, not native: the operator ends a character's premium, under the
+same disabled-by-default credential and transport control lease as the other
+recoveries. It removes the premium ticket keepers (EXP, skill EXP, kept death
+EXP), the daily allotment clock and the premium package's limited item and
+quest uses. Ordinary EXP scrolls and a package's stall decoration stay. The
+session is gone, so no param-job end frame is sent; entry publishes the board
+on reconnect. Clearing a character without premium changes nothing.
+================
+*/
+func (rt *Runtime) OperatorClearPremium(division, name string) error {
+	unlock := rt.lockDivision(division)
+	defer unlock()
+	c := rt.findCharacter(division, name)
+	if c == nil {
+		return fmt.Errorf("character not found")
+	}
+	if !rt.deps.Update(c, "operator-clear-premium", func() bool {
+		if c.DeletePending {
+			return false
+		}
+		var jobs []domain.ParamJob
+		for _, job := range c.ParamJobs {
+			switch job.Param {
+			case paramPremiumExpRate, paramPremiumSkillExpRate, paramDeathExpKept:
+				continue
+			}
+			jobs = append(jobs, job)
+		}
+		var works []domain.CompositeJob
+		for _, work := range c.CompositeJobs {
+			if work.Kind == domain.CompositeUsedItemLimit || work.Kind == domain.CompositeUsedQuestLimit {
+				continue
+			}
+			works = append(works, work)
+		}
+		c.ParamJobs, c.CompositeJobs, c.PremiumClock = jobs, works, nil
+		return true
+	}) {
+		return fmt.Errorf("character premium clear refused")
+	}
 	return nil
 }
 

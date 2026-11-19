@@ -310,7 +310,7 @@ func buildOperation(r *http.Request, name, operator string) (map[string]any, err
 		operation["items"] = []map[string]any{{"codename": strings.TrimSpace(r.FormValue("codename")), "count": count}}
 	case "remove-crest":
 		operation["crest"] = r.FormValue("crest")
-	case "reset-stats", "clear-pk", "unmute-chat", "kick":
+	case "reset-stats", "clear-pk", "clear-premium", "unmute-chat", "kick":
 	default:
 		return nil, fmt.Errorf("unknown action %q", action)
 	}

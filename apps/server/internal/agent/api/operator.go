@@ -111,6 +111,9 @@ type PlayerOperations struct {
 	Rescue     func(PlayerOperation) (any, error)
 	GrantItems func(PlayerOperation) (any, error)
 	ClearPK    func(PlayerOperation) (any, error)
+	// ClearPremium ends the character's premium ticket and package limits
+	// (port-only, operator tooling).
+	ClearPremium func(PlayerOperation) (any, error)
 	// ResetStats returns spent STR/INT points to the free pool (port-only).
 	ResetStats func(PlayerOperation) (any, error)
 	// GrantSilk credits silk to the character's account (operator tooling).
@@ -269,6 +272,12 @@ func (endpoint *operatorEndpoint) ServeHTTP(w http.ResponseWriter, r *http.Reque
 			return
 		}
 		operation = endpoint.config.ClearPK
+	case "clear-premium":
+		if endpoint.config.ClearPremium == nil || request.Town != 0 || len(request.Items) != 0 || request.Silk != 0 {
+			http.Error(w, "invalid premium clear", http.StatusBadRequest)
+			return
+		}
+		operation = endpoint.config.ClearPremium
 	case "grant-silk":
 		if endpoint.config.GrantSilk == nil || request.Town != 0 || len(request.Items) != 0 ||
 			request.Silk == 0 || request.Silk > operatorMaxSilkGrant {

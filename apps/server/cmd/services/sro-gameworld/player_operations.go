@@ -137,6 +137,14 @@ func installPlayerOperations(api *agentapi.API, game *gameplayPlane, hub *transp
 			}
 			return read(request.Character)
 		},
+		ClearPremium: func(request agentapi.PlayerOperation) (any, error) {
+			if err := control.run(request.Character, "premium clear", func() error {
+				return game.items.OperatorClearPremium(shard, request.Character)
+			}); err != nil {
+				return nil, err
+			}
+			return read(request.Character)
+		},
 		ResetStats: func(request agentapi.PlayerOperation) (any, error) {
 			if err := control.run(request.Character, "stat reset", func() error {
 				return game.items.OperatorResetStats(shard, request.Character)
