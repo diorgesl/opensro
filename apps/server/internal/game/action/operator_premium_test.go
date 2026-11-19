@@ -36,9 +36,18 @@ func TestOperatorClearPremiumKeepsScrollsAndBooth(t *testing.T) {
 		booth,
 		{Kind: domain.CompositeUsedQuestLimit, PackageRefObjID: 9, QuestCodename: "QNO_PREMIUM", EndUnixMs: 1 << 50},
 	}
+	luck := domain.TimedSkillJob{SkillID: 900, Token: 2, RemainingMs: 60_000}
+	c.TimedSkillJobs = []domain.TimedSkillJob{{SkillID: 31120, Token: 1, RemainingMs: 60_000}, luck}
 	rt, _ := newTestRuntime(c, testItems())
+	rt.deps.(*enterworld.Deps).Skills = staticSkillSource{
+		31120: {ID: 31120, Codename: "SKILL_MALL_PRE_APRU_GLOBAL_4W_PLUS_01"},
+		900:   {ID: 900, Codename: "SKILL_MALL_APRU_LUCK_01"},
+	}
 	if err := rt.OperatorClearPremium(testDivision, c.Name); err != nil {
 		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(c.TimedSkillJobs, []domain.TimedSkillJob{luck}) {
+		t.Fatalf("premium package buff survived or another buff went: %+v", c.TimedSkillJobs)
 	}
 	if c.PremiumClock != nil || premiumRunning(c, 0) {
 		t.Fatalf("premium survived: %+v / %+v", c.PremiumClock, c.ParamJobs)
