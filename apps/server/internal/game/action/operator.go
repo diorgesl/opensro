@@ -16,6 +16,7 @@ package action
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"opensro.online/server/internal/domain"
 	"opensro.online/server/internal/game/pk"
@@ -80,7 +81,8 @@ func (rt *Runtime) OperatorCharacter(division, name string) (map[string]any, err
 		"pk": c.PK, "pvpState": c.PVPState(), "aggressions": c.Aggressions,
 		"strength": domain.CharacterStrength(c), "intellect": domain.CharacterIntellect(c), "statPoints": c.StatPoints,
 		"skillPoints": c.SkillPoints, "experience": c.Experience, "maxLevel": c.MaxLevel,
-		"premiumClock": c.PremiumClock, "paramJobs": c.ParamJobs, "compositeJobs": c.CompositeJobs}, nil
+		"premiumClock": c.PremiumClock, "paramJobs": c.ParamJobs, "compositeJobs": c.CompositeJobs,
+		"timedSkillJobs": c.TimedSkillJobs}, nil
 }
 
 /*
@@ -175,10 +177,12 @@ OperatorClearPremium
 Port-only, not native: the operator ends a character's premium, under the
 same disabled-by-default credential and transport control lease as the other
 recoveries. It removes the premium ticket keepers (EXP, skill EXP, kept death
-EXP), the daily allotment clock and the premium package's limited item and
-quest uses. Ordinary EXP scrolls and a package's stall decoration stay. The
-session is gone, so no param-job end frame is sent; entry publishes the board
-on reconnect. Clearing a character without premium changes nothing.
+EXP), the daily allotment clock, the premium package's limited item and
+quest uses, and the package's persistent option buff (its USU1 skill, saved
+as a timed skill job and re-installed at login). Ordinary EXP scrolls and a
+package's stall decoration stay. The session is gone, so no param-job or
+buff end frame is sent; entry publishes the board on reconnect. Clearing a
+character without premium changes nothing.
 ================
 */
 func (rt *Runtime) OperatorClearPremium(division, name string) error {
@@ -207,12 +211,39 @@ func (rt *Runtime) OperatorClearPremium(division, name string) error {
 			}
 			works = append(works, work)
 		}
-		c.ParamJobs, c.CompositeJobs, c.PremiumClock = jobs, works, nil
+		var skillJobs []domain.TimedSkillJob
+		for _, job := range c.TimedSkillJobs {
+			if rt.premiumPackageSkill(job.SkillID) {
+				continue
+			}
+			skillJobs = append(skillJobs, job)
+		}
+		c.ParamJobs, c.CompositeJobs, c.PremiumClock, c.TimedSkillJobs = jobs, works, nil, skillJobs
 		return true
 	}) {
 		return fmt.Errorf("character premium clear refused")
 	}
 	return nil
+}
+
+// premiumPackageSkillPrefix names the premium packages' option buffs: every
+// shipped USU1 entry is one of them (SKILL_MALL_PRE_APRU_4W_01, _GLOBAL_4W_01,
+// _GLOBAL_4W_PLUS_01), and only the Gold/Silver Time packages carry USU1.
+// INFERENCE: the item references cannot be enumerated to derive the set from
+// the packages, so the authored "PRE" (premium) family names it.
+const premiumPackageSkillPrefix = "SKILL_MALL_PRE_"
+
+/*
+================
+premiumPackageSkill
+================
+*/
+func (rt *Runtime) premiumPackageSkill(id uint32) bool {
+	if rt.deps.SkillData() == nil {
+		return false
+	}
+	row, ok := rt.deps.SkillData().SkillByID(id)
+	return ok && strings.HasPrefix(row.Codename, premiumPackageSkillPrefix)
 }
 
 /*
