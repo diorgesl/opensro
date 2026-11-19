@@ -323,7 +323,12 @@ export async function publishEquipmentParticleMetadata( dress, vsroRoot = vsroIt
 							...(ambient.has( source ) ? { particleModifiers: ambient.get( source ) } : {})
 						};
 					}
-					if ( ambient.has( source ) ) {
+					// An animated resource with no attach bone (a later client's
+					// avatar in the variant root, none in v1.150) is an
+					// auxiliary handle: its ambient set rides its own bones, not
+					// a branch here, so it has no socket to check.
+					const auxiliary = !bsr.skeletonAttachBone && bsr.animationPaths.length > 0;
+					if ( ambient.has( source ) && !auxiliary ) {
 						for ( const entry of ambient.get( source ).flatMap( m => m.entries ) ) {
 							if ( !branch?.nodes.some( n => n.name === entry.boneName ) ) {
 								throw Error(
