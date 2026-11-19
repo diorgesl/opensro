@@ -187,17 +187,17 @@ func TestChatItemLinksPerMessage(t *testing.T) {
 ================
 TestBetaSilkStarterBounds
 
-The starter accepts 0 (no starter) up to the 1500 bank cap, is live, and
-refuses a value beyond the cap or a fraction instead of clamping.
+The starter accepts 0 (no starter) up to 10000, is live, and refuses a
+value beyond that or a fraction instead of clamping.
 ================
 */
 func TestBetaSilkStarterBounds(t *testing.T) {
-	for _, raw := range []string{"0", "400", "1500"} {
+	for _, raw := range []string{"0", "400", "1500", "10000"} {
 		if _, err := Validate(BetaSilkStarter, raw); err != nil {
 			t.Fatalf("%q refused: %v", raw, err)
 		}
 	}
-	for _, raw := range []string{"-1", "1501", "12.5", "lots"} {
+	for _, raw := range []string{"-1", "10001", "12.5", "lots"} {
 		if _, err := Validate(BetaSilkStarter, raw); err == nil {
 			t.Fatalf("%q accepted", raw)
 		}
