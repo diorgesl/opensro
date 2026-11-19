@@ -22,6 +22,7 @@ que o deploy usa, ele para na sua máquina e não no servidor.
 | `web` | nginx com o cliente: `/api/` vai para o Agent, `/shards/global-official/transport/` vai para o GameWorld. É o único container na rede `traefik`. |
 | `admin` | O painel de administração (`deploy/admin`). Roda na rede do GameWorld e escuta só no loopback do host (`127.0.0.1:9090`). |
 | `admin-relay` | Repassa ao Agent só as rotas de conta que o painel usa. Roda na rede do `identity`. |
+| `admin-relay-pvp` | Repassa ao GameWorld PVP só as operações de personagem. Roda na rede do `gameworld-pvp`. |
 | `portal` | O portal público (`deploy/portal`): status, ranking e cadastro de conta. Roda na rede do GameWorld, sem porta publicada; o nginx do `web` manda `/` e `/portal/` para ele, e o jogo fica em `/play`. |
 
 Jobs de uma vez, que o `rollout.sh` roda: `provision` (cria chaves, tokens, o authority do shard e o token de
@@ -77,7 +78,7 @@ recentes.
 ## Painel admin
 
 O painel não fica na internet e não tem login próprio: quem tem SSH no servidor abre o túnel acima e usa. Na
-página de personagens dá para buscar pelo nome exato e definir level e SP, dar silk, gold e itens, resetar
+página de personagens dá para escolher o shard (o principal ou o PVP), buscar pelo nome exato e definir level e SP, dar silk, gold e itens, resetar
 STR/INT, limpar PK, mutar, kickar, resgatar para uma cidade e remover emblema. Na de contas dá para criar conta,
 trocar senha, desativar e consultar.
 
